@@ -1,1 +1,1 @@
-web: gunicorn core_app.wsgi --log-file -
+web: gunicorn 'NoneShopping_.wsgi'
