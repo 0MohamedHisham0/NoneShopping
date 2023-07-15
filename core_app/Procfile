@@ -1,1 +1,1 @@
-web: gunicorn 'NoneShopping_.wsgi'
+web: gunicorn 'core_app.wsgi'
