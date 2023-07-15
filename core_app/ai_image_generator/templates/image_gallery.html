@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>None Shopping</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+
+        .item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .item img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 4px;
+        }
+
+        .item h3 {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .item .created-at {
+            font-size: 12px;
+            margin-top: 5px;
+            color: #777;
+        }
+
+        .hour-category {
+            margin: 20px 0;
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+        }
+
+        /* Styles for pop-up dialog */
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s;
+        }
+
+        .dialog-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .dialog-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .dialog-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .dialog-input {
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .dialog-button {
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .dialog-button:hover {
+            background-color: #45a049;
+        }
+
+        .dialog-button.loading {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+    <script>
+        function showDialog(imageId) {
+            var overlay = document.getElementById("dialog-overlay");
+            overlay.classList.add("active");
+        }
+
+        function hideDialog() {
+            var overlay = document.getElementById("dialog-overlay");
+            overlay.classList.remove("active");
+        }
+
+        function submitDialog() {
+            var input = document.getElementById("dialog-input");
+            var selectedImageId = input.value;
+            var button = document.getElementById("dialog-button");
+
+            button.disabled = true;
+            button.classList.add("loading");
+
+            fetch('/selectImageItem', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken':'jgP2v2cbApMX3OYjKedbiZgjvO8Ho2yI'
+                },
+                body: JSON.stringify({ id: selectedImageId }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Request failed');
+                }
+            })
+            .then(data => {
+                var statusMessage = data.status === 'success' ? 'Success' : 'Error';
+
+                if (data.status === 'success') {
+                    hideDialog();
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('API error:', error);
+                alert('Error: Request failed');
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.classList.remove("loading");
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>None Shopping</h1>
+    <div class="dialog-overlay" id="dialog-overlay">
+        <div class="dialog-content">
+            <div class="dialog-title">Enter selected image ID</div>
+            <input type="text" id="dialog-input" class="dialog-input">
+            <button id="dialog-button" onclick="submitDialog()" class="dialog-button">OK</button>
+        </div>
+    </div>
+
+    {% regroup images|dictsort:"created_at" by created_at|date:"j/n/Y - g a" as image_groups %}
+    {% for group in image_groups %}
+        <div class="hour-category">{{ group.grouper }}</div>
+        <div class="grid">
+            {% for image in group.list %}
+                {% if not image.is_selected %}
+                    <div class="item" onclick="showDialog('{{ image.id }}')">
+                        <a href="{{ image.drive_folder_url }}" target="_blank">
+                            <img src="{{ image.platform_image_url }}" alt="{{ image.title }}">
+                            <h3>{{ image.title }}</h3>
+                        </a>
+                        <div class="created-at">Created at: {{ image.created_at }}</div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endfor %}
+</body>
+</html>
