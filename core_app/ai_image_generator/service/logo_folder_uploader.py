@@ -176,14 +176,14 @@ class LogoFolderUploader:
         logo_file_path = os.path.join(folder_path, f"logo_description.txt")
         with open(logo_file_path, 'w') as file:
             file.write(f"Logo: {logoTitle}\n")
-            file.write(f"Tags: {', '.join(logoTags)}\n")
+            file.write(f"Tags: {logoTags}\n")
             file.write(f"Description: {logoDescription}")
 
     def add_logo_for_history_file(self, image_list, logoTitle, logoTags, logoDescription):
         history_logs_path = os.path.join("history_logs.txt")
         with open(history_logs_path, "a") as file:
             file.write(f"{logoTitle}\n")
-            file.write(f"Tags: {', '.join(logoTags)}\n")
+            file.write(f"Tags: {logoTags}\n")
             file.write(f"Description: {logoDescription}\n\n")
             file.write(f"ImageUrls {image_list}\n")
 
@@ -381,8 +381,8 @@ class LogoFolderUploader:
         self.create_logo_folders(self.logos, parent_folder)
 
         uploaded_folders_count = self.upload_folder_to_drive(parent_folder)
-
-        self.send_push_bullet_notification(uploaded_folders_count)
+        if uploaded_folders_count != 0:
+            self.send_push_bullet_notification(uploaded_folders_count)
 
         # self.save_task_ids(self.taskIdList)
         #
